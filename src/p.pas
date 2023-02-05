@@ -39,6 +39,7 @@ begin
   MessageDlg('错误', _errorMessage, mtError, [mbOK], '');
 end;
 
+{ 解包pak }
 function Unpak(inputPath: string; outputPath: string): boolean;
 begin
   Result := False;
@@ -51,9 +52,15 @@ begin
   Result := True;
 end;
 
+{ 打包pak }
 function Pak(inputPath: string; outputPath: string): boolean;
 begin
   Result := False;
+  if not DirectoryExists(inputPath) then
+  begin
+    SetErrorMessage('要打包的文件夹不存在');
+    exit;
+  end;
   //TODO: pak
   Result := True;
 end;

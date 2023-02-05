@@ -49,18 +49,18 @@ end;
 
 procedure TMainForm.ButtonStartClick(Sender: TObject);
 var
-  inputPath: string;
-  outputPath: string;
+  pakPath: string;
+  unpakPath: string;
 begin
-  inputPath := Trim(EditButtonPakPath.Text);
-  outputPath := Trim(EditButtonUnpakPath.Text);
+  pakPath := Trim(EditButtonPakPath.Text);
+  unpakPath := Trim(EditButtonUnpakPath.Text);
 
-  if inputPath = '' then
+  if pakPath = '' then
   begin
     ShowMessage('请输入pak文件路径');
     exit;
   end;
-  if outputPath = '' then
+  if unpakPath = '' then
   begin
     ShowMessage('解包/打包路径不能为空');
     exit;
@@ -69,7 +69,7 @@ begin
   if RadioButtonPak.Checked then
   begin
     SetIsLoading(True);
-    if Pak(inputPath, outputPath) then
+    if Pak(unpakPath, pakPath) then
       ShowMessage('打包完成')
     else
       ShowErrorMessage;
@@ -78,7 +78,7 @@ begin
   else if RadioButtonUnpak.Checked then
   begin
     SetIsLoading(True);
-    if Unpak(inputPath, outputPath) then
+    if Unpak(pakPath, unpakPath) then
       ShowMessage('解包完成')
     else
       ShowErrorMessage;
