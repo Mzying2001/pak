@@ -17,7 +17,7 @@ object MainForm: TMainForm
     Width = 70
     Caption = 'pak文件路径'
   end
-  object EditButtonInput: TEditButton
+  object EditButtonPakPath: TEditButton
     Left = 8
     Height = 25
     Top = 24
@@ -36,7 +36,7 @@ object MainForm: TMainForm
     Width = 77
     Caption = '解包/打包路径'
   end
-  object EditButtonOutput: TEditButton
+  object EditButtonUnpakPath: TEditButton
     Left = 8
     Height = 25
     Top = 72
@@ -54,6 +54,7 @@ object MainForm: TMainForm
     Top = 128
     Width = 75
     Caption = '执行'
+    OnClick = ButtonStartClick
     TabOrder = 2
   end
   object RadioButtonPak: TRadioButton
