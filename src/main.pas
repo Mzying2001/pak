@@ -82,7 +82,7 @@ var
   sfd: TSaveDialog;
 begin
   sfd := TSaveDialog.Create(self);
-  sfd.Title := '选择pak文件';
+  sfd.Title := '选择文件';
   sfd.Filter := 'pak文件|*.pak';
   if sfd.Execute then
     EditButtonPakPath.Text := sfd.FileName;
