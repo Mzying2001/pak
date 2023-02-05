@@ -57,7 +57,7 @@ object MainForm: TMainForm
     OnClick = ButtonStartClick
     TabOrder = 2
   end
-  object RadioButtonPak: TRadioButton
+  object RadioButtonUnpak: TRadioButton
     Left = 104
     Height = 21
     Top = 104
@@ -67,7 +67,7 @@ object MainForm: TMainForm
     TabOrder = 4
     TabStop = True
   end
-  object RadioButtonUnpak: TRadioButton
+  object RadioButtonPak: TRadioButton
     Left = 168
     Height = 21
     Top = 104

@@ -41,6 +41,11 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Main"/>
       </Unit>
+      <Unit>
+        <Filename Value="p.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="P"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

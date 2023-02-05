@@ -5,7 +5,8 @@ unit Main;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, EditBtn;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, EditBtn,
+  P;
 
 type
 
@@ -17,8 +18,8 @@ type
     EditButtonUnpakPath: TEditButton;
     Label1: TLabel;
     Label2: TLabel;
-    RadioButtonPak: TRadioButton;
     RadioButtonUnpak: TRadioButton;
+    RadioButtonPak: TRadioButton;
     procedure ButtonStartClick(Sender: TObject);
     procedure EditButtonInputButtonClick(Sender: TObject);
     procedure EditButtonOutputButtonClick(Sender: TObject);
@@ -48,18 +49,18 @@ end;
 
 procedure TMainForm.ButtonStartClick(Sender: TObject);
 var
-  inputPath: string;
-  outputPath: string;
+  pakPath: string;
+  unpakPath: string;
 begin
-  inputPath := Trim(EditButtonPakPath.Text);
-  outputPath := Trim(EditButtonUnpakPath.Text);
+  pakPath := Trim(EditButtonPakPath.Text);
+  unpakPath := Trim(EditButtonUnpakPath.Text);
 
-  if inputPath = '' then
+  if pakPath = '' then
   begin
     ShowMessage('请输入pak文件路径');
     exit;
   end;
-  if outputPath = '' then
+  if unpakPath = '' then
   begin
     ShowMessage('解包/打包路径不能为空');
     exit;
@@ -67,13 +68,21 @@ begin
 
   if RadioButtonPak.Checked then
   begin
-    //TODO: pak
-    ShowMessage('pak');
+    SetIsLoading(True);
+    if Pak(unpakPath, pakPath) then
+      ShowMessage('打包完成')
+    else
+      ShowErrorMessage;
+    SetIsLoading(False);
   end
   else if RadioButtonUnpak.Checked then
   begin
-    //TODO: unpak
-    ShowMessage('unpak');
+    SetIsLoading(True);
+    if Unpak(pakPath, unpakPath) then
+      ShowMessage('解包完成')
+    else
+      ShowErrorMessage;
+    SetIsLoading(False);
   end;
 end;
 
@@ -104,18 +113,22 @@ begin
     ButtonStart.Enabled := False;
     EditButtonPakPath.Enabled := False;
     EditButtonUnpakPath.Enabled := False;
-    RadioButtonPak.Enabled := False;
     RadioButtonUnpak.Enabled := False;
+    RadioButtonPak.Enabled := False;
+    if RadioButtonUnpak.Checked then
+      ButtonStart.Caption := '解包中...'
+    else if RadioButtonPak.Checked then
+      ButtonStart.Caption := '打包中...';
   end
   else
   begin
     ButtonStart.Enabled := True;
     EditButtonPakPath.Enabled := True;
     EditButtonUnpakPath.Enabled := True;
-    RadioButtonPak.Enabled := True;
     RadioButtonUnpak.Enabled := True;
+    RadioButtonPak.Enabled := True;
+    ButtonStart.Caption := '执行';
   end;
 end;
 
 end.
-
