@@ -12,14 +12,19 @@ const
   PAK_FILEINFO_ENDFLAG: uint8 = $80;
 
 type
-  TPakHeader = record
+  TPakHeader = packed record
     magic: uint32;
     version: uint32;
   end;
 
+  TWinFileTime = packed record
+    dwLowDateTime: uint32;
+    dwHighDateTime: uint32;
+  end;
+
   TPakFileInfo = class
     fileSize: uint32;
-    timeStamp: uint64;
+    fileTime: TWinFileTime;
     path: string;
     next: TPakFileInfo;
   end;
@@ -125,7 +130,7 @@ var
   pathLen: uint8 = 0; //文件路径长度
   pathBuf: array[0..255] of char = ''; //储存文件路径
   fileSize: uint32 = 0; //文件大小
-  timeStamp: uint64 = 0; //文件时间戳
+  fileTime: TWinFileTime; //文件修改时间
   firstFile: TPakFileInfo = nil; //第一个文件
   fileInfo: TPakFileInfo = nil; //用于向链表添加数据和迭代变量
   pathFull: string; //输出文件的完整路径
@@ -183,12 +188,14 @@ begin
       fsIn.Read(fileSize, 4);
       PakXor(fileSize, 4);
 
-      fsIn.Read(timeStamp, 8);
-      PakXor(timeStamp, 8);
+      fileTime.dwLowDateTime := 0;
+      fileTime.dwHighDateTime := 0;
+      fsIn.Read(fileTime, sizeof(TWinFileTime));
+      PakXor(fileTime, sizeof(TWinFileTime));
 
       fileInfo.path := string.Create(pathBuf, 0, pathLen);
       fileInfo.fileSize := fileSize;
-      fileInfo.timeStamp := timeStamp;
+      fileInfo.fileTime := fileTime;
       fileInfo.next := nil;
     end;
 
@@ -212,8 +219,9 @@ begin
         PakXor(_outputBuffer, restSize);
         fsOut.Write(_outputBuffer, restSize);
       end;
-      fileInfo := fileInfo.next;
       FreeAndNil(fsOut);
+      //TODO:设置文件修改时间
+      fileInfo := fileInfo.next;
     until fileInfo = nil;
 
     Result := True;
@@ -243,7 +251,7 @@ var
   pathLen2: uint8; //同上，写入路径时储存一个副本
   pathBuf: array[0..255] of char; //文件信息中的路径
   fileSize: uint32; //文件大小
-  timeStamp: uint64; //文件时间戳
+  fileTime: TWinFileTime; //文件修改时间
   restSize: SizeInt; //剩余要写入文件数据的大小
   i: integer; //迭代变量
 begin
@@ -297,9 +305,11 @@ begin
       PakXor(fileSize, 4);
       fsOut.Write(fileSize, 4);
 
-      timeStamp := FileAge(filePath);
-      PakXor(timeStamp, 8);
-      fsOut.Write(timeStamp, 8);
+      //TODO:获取文件修改时间
+      fileTime.dwHighDateTime := 0;
+      fileTime.dwLowDateTime := 0;
+      PakXor(fileTime, sizeof(TWinFileTime));
+      fsOut.Write(fileTime, sizeof(TWinFileTime));
     end;
     flag := PAK_FILEINFO_ENDFLAG;
     PakXor(flag, 1);
