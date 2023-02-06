@@ -171,7 +171,7 @@ begin
 
   outputPath := outputPath.Replace('/', '\');
   if not outputPath.EndsWith('\') then
-     outputPath := outputPath + '\';
+    outputPath := outputPath + '\';
 
   try
     fsIn := TFileStream.Create(inputPath, fmOpenRead);
@@ -182,7 +182,7 @@ begin
     fsIn.Read(header, sizeof(TPakHeader));
     PakXor(header, sizeof(TPakHeader));
     if header.magic <> PAK_HEADER_MAGIC then
-       raise Exception.Create('输入的pak文件格式不正确');
+      raise Exception.Create('输入的pak文件格式不正确');
 
     //读文件信息
     while True do
@@ -190,7 +190,7 @@ begin
       fsIn.Read(flag, 1);
       PakXor(flag, 1);
       if flag <> 0 then
-         break;
+        break;
 
       if fileInfo = nil then
       begin
@@ -255,7 +255,7 @@ begin
   end;
 
   if fsIn <> nil then
-     FreeAndNil(fsIn);
+    FreeAndNil(fsIn);
 end;
 
 { ------------------------------------------------------------ }
