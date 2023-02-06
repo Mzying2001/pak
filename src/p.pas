@@ -93,7 +93,7 @@ var
   dir: string;
 begin
   for i := 0 to Length(filePath) - 1 do
-    if filePath[i] = '\' then
+    if (filePath[i] = '\') or (filePath[i] = '/') then
     begin
       dir := filePath.Substring(0, i);
       if not DirectoryExists(dir) then
@@ -169,8 +169,7 @@ begin
     exit;
   end;
 
-  outputPath := outputPath.Replace('/', '\');
-  if not outputPath.EndsWith('\') then
+  if not (outputPath.EndsWith('\') or outputPath.EndsWith('/')) then
     outputPath := outputPath + '\';
 
   try
@@ -288,8 +287,7 @@ begin
     exit;
   end;
 
-  inputPath := inputPath.Replace('/', '\');
-  if not inputPath.EndsWith('\') then
+  if not (inputPath.EndsWith('\') or inputPath.EndsWith('/')) then
     inputPath := inputPath + '\';
 
   try
