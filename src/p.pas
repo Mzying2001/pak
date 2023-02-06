@@ -12,12 +12,12 @@ const
   PAK_FILEINFO_ENDFLAG: uint8 = $80;
 
 type
-  TPakHeader = packed record
+  TPakHeader = record
     magic: uint32;
     version: uint32;
   end;
 
-  TFileTime = packed record
+  TFileTime = record
     dwLowDateTime: uint32;
     dwHighDateTime: uint32;
   end;
@@ -60,6 +60,30 @@ begin
     Inc(p);
     size := size - 1;
   end;
+end;
+
+{ 将FILETIME转为时间戳 }
+function FileTimeToTimestamp(fileTime: TFileTime): uint64;
+var
+  p: PInt32;
+begin
+  p := PInt32(@Result);
+  p^ := fileTime.dwLowDateTime;
+  Inc(p);
+  p^ := fileTime.dwHighDateTime;
+  Result := (Result - 116444736000000000) div 10000000;
+end;
+
+{ 将时间戳转为FILETIME }
+function TimestampToFileTime(timestamp: uint64): TFileTime;
+var
+  p: Pint32;
+begin
+  timestamp := (timestamp * 10000000) + 116444736000000000;
+  p := PInt32(@timestamp);
+  Result.dwLowDateTime := p^;
+  Inc(p);
+  Result.dwHighDateTime := p^;
 end;
 
 { 文件所在路径不存在时创建路径 }
@@ -220,7 +244,7 @@ begin
         fsOut.Write(_outputBuffer, restSize);
       end;
       FreeAndNil(fsOut);
-      //TODO:设置文件修改时间
+      FileSetDate(pathFull, FileTimeToTimestamp(fileInfo.fileTime));
       fileInfo := fileInfo.next;
     until fileInfo = nil;
 
@@ -305,9 +329,7 @@ begin
       PakXor(fileSize, 4);
       fsOut.Write(fileSize, 4);
 
-      //TODO:获取文件修改时间
-      fileTime.dwHighDateTime := 0;
-      fileTime.dwLowDateTime := 0;
+      fileTime := TimestampToFileTime(FileAge(filePath));
       PakXor(fileTime, sizeof(TFileTime));
       fsOut.Write(fileTime, sizeof(TFileTime));
     end;
