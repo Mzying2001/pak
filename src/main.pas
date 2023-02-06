@@ -88,13 +88,14 @@ end;
 
 procedure TMainForm.EditButtonInputButtonClick(Sender: TObject);
 var
-  sfd: TSaveDialog;
+  sd: TSaveDialog;
 begin
-  sfd := TSaveDialog.Create(self);
-  sfd.Title := '选择文件';
-  sfd.Filter := 'pak文件|*.pak';
-  if sfd.Execute then
-    EditButtonPakPath.Text := sfd.FileName;
+  sd := TSaveDialog.Create(self);
+  sd.Title := '选择文件';
+  sd.Filter := 'pak文件|*.pak';
+  sd.FileName := 'main';
+  if sd.Execute then
+    EditButtonPakPath.Text := sd.FileName;
 end;
 
 procedure TMainForm.EditButtonOutputButtonClick(Sender: TObject);

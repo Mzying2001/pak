@@ -73,19 +73,23 @@ end;
 { 解包pak }
 function Unpak(inputPath: string; outputPath: string): boolean;
 var
-  fs: TFileStream = nil; //输入流
-  fsout: TFileStream = nil; //输出流
+  fsIn: TFileStream = nil; //输入流
+  fsOut: TFileStream = nil; //输出流
+  outBufLen: SizeInt; //输出缓存大小
   header: TPakHeader; //文件头
   flag: uint8 = 0; //读取文件信息结束的标记
   pathLen: uint8 = 0; //文件路径长度
-  pathBuf: array[0..255] of char; //储存文件路径
+  pathBuf: array[0..255] of char = ''; //储存文件路径
   fileSize: uint32 = 0; //文件大小
   timeStamp: uint64 = 0; //文件时间戳
   firstFile: TPakFileInfo = nil; //第一个文件
   fileInfo: TPakFileInfo = nil; //用于向链表添加数据和迭代变量
-  pathTmp: string; //用于拼接输出文件的路径
+  pathFull: string; //输出文件的完整路径
+  restSize: SizeInt; //储存输出文件时剩余的大小
 begin
   Result := False;
+  outBufLen := Length(_outputBuffer);
+
   if not FileExists(inputPath) then
   begin
     SetErrorMessage('要解包的pak文件不存在');
@@ -97,10 +101,12 @@ begin
      outputPath := outputPath + '\';
 
   try
-    fs := TFileStream.Create(inputPath, fmOpenRead);
+    fsIn := TFileStream.Create(inputPath, fmOpenRead);
 
     //读文件头
-    fs.Read(header, sizeof(TPakHeader));
+    header.magic := 0;
+    header.version := 0;
+    fsIn.Read(header, sizeof(TPakHeader));
     PakXor(header, sizeof(TPakHeader));
     if header.magic <> PAK_HEADER_MAGIC then
        raise Exception.Create('输入的pak文件格式不正确');
@@ -108,7 +114,7 @@ begin
     //读文件信息
     while True do
     begin
-      fs.Read(flag, 1);
+      fsIn.Read(flag, 1);
       PakXor(flag, 1);
       if flag <> 0 then
          break;
@@ -124,16 +130,16 @@ begin
         fileInfo := fileInfo.next;
       end;
 
-      fs.Read(pathLen, 1);
+      fsIn.Read(pathLen, 1);
       PakXor(pathLen, 1);
 
-      fs.Read(pathBuf, pathLen);
+      fsIn.Read(pathBuf, pathLen);
       PakXor(pathBuf, pathLen);
 
-      fs.Read(fileSize, 4);
+      fsIn.Read(fileSize, 4);
       PakXor(fileSize, 4);
 
-      fs.Read(timeStamp, 8);
+      fsIn.Read(timeStamp, 8);
       PakXor(timeStamp, 8);
 
       fileInfo.path := string.Create(pathBuf, 0, pathLen);
@@ -145,25 +151,25 @@ begin
     //导出文件
     fileInfo := firstFile;
     repeat
-      fileSize := fileInfo.fileSize;
-      pathTmp := outputPath + fileInfo.path;
-      CreateDirOfFile(pathTmp);
-      fsout := TFileStream.Create(pathTmp, fmOutput);
-      while fileSize >= Length(_outputBuffer) do
+      restSize := fileInfo.fileSize;
+      pathFull := outputPath + fileInfo.path;
+      CreateDirOfFile(pathFull);
+      fsOut := TFileStream.Create(pathFull, fmOutput);
+      while restSize >= outBufLen do
       begin
-        fs.Read(_outputBuffer, Length(_outputBuffer));
-        PakXor(_outputBuffer, Length(_outputBuffer));
-        fsout.Write(_outputBuffer, Length(_outputBuffer));
-        fileSize := fileSize - Length(_outputBuffer);
+        fsIn.Read(_outputBuffer, outBufLen);
+        PakXor(_outputBuffer, outBufLen);
+        fsOut.Write(_outputBuffer, outBufLen);
+        restSize := restSize - outBufLen;
       end;
-      if fileSize <> 0 then
+      if restSize <> 0 then
       begin
-        fs.Read(_outputBuffer, fileSize);
-        PakXor(_outputBuffer, fileSize);
-        fsout.Write(_outputBuffer, fileSize);
+        fsIn.Read(_outputBuffer, restSize);
+        PakXor(_outputBuffer, restSize);
+        fsOut.Write(_outputBuffer, restSize);
       end;
       fileInfo := fileInfo.next;
-      FreeAndNil(fsout);
+      FreeAndNil(fsOut);
     until fileInfo = nil;
 
     Result := True;
@@ -172,21 +178,39 @@ begin
       SetErrorMessage(e.Message);
   end;
 
-  if fs <> nil then
-     FreeAndNil(fs);
+  if fsIn <> nil then
+     FreeAndNil(fsIn);
 end;
 
 { 打包pak }
 function Pak(inputPath: string; outputPath: string): boolean;
+var
+  fsIn: TFileStream = nil; //输入流
+  fsOut: TFileStream = nil; //输出流
+  outBufLen: SizeInt; //输出缓存大小
 begin
   Result := False;
+  outBufLen := Length(_outputBuffer);
+
   if not DirectoryExists(inputPath) then
   begin
     SetErrorMessage('要打包的文件夹不存在');
     exit;
   end;
-  //TODO: pak
-  Result := True;
+
+  try
+    fsOut := TFileStream.Create(outputPath, fmOutput);
+
+    //TODO
+
+    Result := True;
+  except
+    on e: Exception do
+      SetErrorMessage(e.Message);
+  end;
+
+  if fsOut <> nil then
+    FreeAndNil(fsOut);
 end;
 
 end.

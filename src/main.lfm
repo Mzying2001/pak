@@ -1,66 +1,68 @@
 object MainForm: TMainForm
   Left = 268
-  Height = 160
+  Height = 200
   Top = 250
-  Width = 320
+  Width = 400
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'pak'
-  ClientHeight = 160
-  ClientWidth = 320
+  ClientHeight = 200
+  ClientWidth = 400
+  DesignTimePPI = 120
   OnCreate = FormCreate
   Position = poDesktopCenter
+  LCLVersion = '2.2.0.4'
   object Label1: TLabel
-    Left = 8
+    Left = 10
     Height = 17
-    Top = 8
+    Top = 10
     Width = 70
     Caption = 'pak文件路径'
   end
   object EditButtonPakPath: TEditButton
-    Left = 8
+    Left = 10
     Height = 25
-    Top = 24
-    Width = 304
+    Top = 30
+    Width = 380
     ButtonCaption = '...'
-    ButtonWidth = 23
+    ButtonWidth = 29
     MaxLength = 0
     NumGlyphs = 1
     PasswordChar = #0
     TabOrder = 0
   end
   object Label2: TLabel
-    Left = 8
+    Left = 10
     Height = 17
-    Top = 56
+    Top = 70
     Width = 77
     Caption = '解包/打包路径'
   end
   object EditButtonUnpakPath: TEditButton
-    Left = 8
+    Left = 10
     Height = 25
-    Top = 72
-    Width = 304
+    Top = 90
+    Width = 380
     ButtonCaption = '...'
-    ButtonWidth = 23
+    ButtonWidth = 29
     MaxLength = 0
     NumGlyphs = 1
     PasswordChar = #0
     TabOrder = 1
   end
   object ButtonStart: TButton
-    Left = 120
-    Height = 25
-    Top = 128
-    Width = 75
+    Left = 150
+    Height = 31
+    Top = 160
+    Width = 94
     Caption = '执行'
     OnClick = ButtonStartClick
     TabOrder = 2
   end
   object RadioButtonUnpak: TRadioButton
-    Left = 104
+    Left = 130
     Height = 21
-    Top = 104
+    Top = 130
     Width = 46
     Caption = '解包'
     Checked = True
@@ -68,9 +70,9 @@ object MainForm: TMainForm
     TabStop = True
   end
   object RadioButtonPak: TRadioButton
-    Left = 168
+    Left = 210
     Height = 21
-    Top = 104
+    Top = 130
     Width = 46
     Caption = '打包'
     TabOrder = 3
