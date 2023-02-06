@@ -17,14 +17,14 @@ type
     version: uint32;
   end;
 
-  TWinFileTime = packed record
+  TFileTime = packed record
     dwLowDateTime: uint32;
     dwHighDateTime: uint32;
   end;
 
   TPakFileInfo = class
     fileSize: uint32;
-    fileTime: TWinFileTime;
+    fileTime: TFileTime;
     path: string;
     next: TPakFileInfo;
   end;
@@ -130,7 +130,7 @@ var
   pathLen: uint8 = 0; //文件路径长度
   pathBuf: array[0..255] of char = ''; //储存文件路径
   fileSize: uint32 = 0; //文件大小
-  fileTime: TWinFileTime; //文件修改时间
+  fileTime: TFileTime; //文件修改时间
   firstFile: TPakFileInfo = nil; //第一个文件
   fileInfo: TPakFileInfo = nil; //用于向链表添加数据和迭代变量
   pathFull: string; //输出文件的完整路径
@@ -190,8 +190,8 @@ begin
 
       fileTime.dwLowDateTime := 0;
       fileTime.dwHighDateTime := 0;
-      fsIn.Read(fileTime, sizeof(TWinFileTime));
-      PakXor(fileTime, sizeof(TWinFileTime));
+      fsIn.Read(fileTime, sizeof(TFileTime));
+      PakXor(fileTime, sizeof(TFileTime));
 
       fileInfo.path := string.Create(pathBuf, 0, pathLen);
       fileInfo.fileSize := fileSize;
@@ -251,7 +251,7 @@ var
   pathLen2: uint8; //同上，写入路径时储存一个副本
   pathBuf: array[0..255] of char; //文件信息中的路径
   fileSize: uint32; //文件大小
-  fileTime: TWinFileTime; //文件修改时间
+  fileTime: TFileTime; //文件修改时间
   restSize: SizeInt; //剩余要写入文件数据的大小
   i: integer; //迭代变量
 begin
@@ -308,8 +308,8 @@ begin
       //TODO:获取文件修改时间
       fileTime.dwHighDateTime := 0;
       fileTime.dwLowDateTime := 0;
-      PakXor(fileTime, sizeof(TWinFileTime));
-      fsOut.Write(fileTime, sizeof(TWinFileTime));
+      PakXor(fileTime, sizeof(TFileTime));
+      fsOut.Write(fileTime, sizeof(TFileTime));
     end;
     flag := PAK_FILEINFO_ENDFLAG;
     PakXor(flag, 1);
