@@ -9,6 +9,7 @@ uses
 
 const
   PAK_HEADER_MAGIC: uint32 = $BAC04AC0;
+  PAK_FILEINFO_ENDFLAG: uint8 = $80;
 
 type
   TPakHeader = record
@@ -56,6 +57,7 @@ begin
   end;
 end;
 
+{ 文件所在路径不存在时创建路径 }
 procedure CreateDirOfFile(filePath: string);
 var
   i: integer;
@@ -69,6 +71,48 @@ begin
         CreateDir(dir);
     end;
 end;
+
+{ 获取文件夹下的所有文件 }
+function GetFileList(dir: string): TStringList;
+var
+  sr: TSearchRec;
+  path: string;
+begin
+  Result := TStringList.Create;
+  if FindFirst(dir + '*', faAnyFile, sr) = 0 then
+  begin
+    repeat
+      if (sr.Name = '.') or (sr.Name = '..') then
+        continue;
+      path := dir + sr.Name;
+      if DirectoryExists(path) then
+        Result.AddStrings(GetFileList(path + '\'))
+      else
+        Result.Add(path);
+    until FindNext(sr) <> 0;
+    FindClose(sr);
+  end;
+end;
+
+{ 获取文件大小 }
+function GetFileSize(const filePath: string): int64;
+var
+  sr: TSearchRec;
+begin
+  if not FileExists(filePath) then
+  begin
+    Result := -1;
+    Exit;
+  end;
+  if FindFirst(filePath, faAnyFile, sr) = 0 then
+    Result := int64(sr.FindData.nFileSizeHigh) shl 32 +
+      int64(sr.FindData.nFileSizeLow)
+  else
+    Result := -1;
+  FindClose(sr);
+end;
+
+{ ------------------------------------------------------------ }
 
 { 解包pak }
 function Unpak(inputPath: string; outputPath: string): boolean;
@@ -182,12 +226,26 @@ begin
      FreeAndNil(fsIn);
 end;
 
+{ ------------------------------------------------------------ }
+
 { 打包pak }
 function Pak(inputPath: string; outputPath: string): boolean;
 var
   fsIn: TFileStream = nil; //输入流
   fsOut: TFileStream = nil; //输出流
   outBufLen: SizeInt; //输出缓存大小
+  fileList: TStringList; //要打包的文件列表
+  fileSizeList: array of uint32; //储存fileList中对应文件的大小
+  filePath: string; //文件路径迭代变量
+  header: TPakHeader; //文件头
+  flag: uint8; //读取文件信息结束的标记
+  pathLen: uint8; //文件路径长度
+  pathLen2: uint8; //同上，写入路径时储存一个副本
+  pathBuf: array[0..255] of char; //文件信息中的路径
+  fileSize: uint32; //文件大小
+  timeStamp: uint64; //文件时间戳
+  restSize: SizeInt; //剩余要写入文件数据的大小
+  i: integer; //迭代变量
 begin
   Result := False;
   outBufLen := Length(_outputBuffer);
@@ -198,10 +256,76 @@ begin
     exit;
   end;
 
+  inputPath := inputPath.Replace('/', '\');
+  if not inputPath.EndsWith('\') then
+    inputPath := inputPath + '\';
+
   try
     fsOut := TFileStream.Create(outputPath, fmOutput);
+    fileList := GetFileList(inputPath);
 
-    //TODO
+    //获取每个文件的大小
+    fileSizeList := [];
+    SetLength(fileSizeList, fileList.Count);
+    for i := 0 to fileList.Count - 1 do
+      fileSizeList[i] := GetFileSize(fileList[i]);
+
+    //写文件头
+    header.magic := PAK_HEADER_MAGIC;
+    header.version := 0;
+    PakXor(header, sizeof(TPakHeader));
+    fsOut.Write(header, sizeof(TPakHeader));
+
+    //写文件信息
+    for i := 0 to fileList.Count - 1 do
+    begin
+      filePath := fileList[i];
+
+      flag := 0;
+      PakXor(flag, 1);
+      fsOut.Write(flag, 1);
+
+      pathLen := Length(filePath) - Length(inputPath);
+      pathBuf := filePath.Substring(Length(inputPath), pathLen);
+      pathLen2 := pathLen;
+      PakXor(pathBuf, pathLen);
+      PakXor(pathLen, 1);
+      fsOut.Write(pathLen, 1);
+      fsOut.Write(pathBuf, pathLen2);
+
+      fileSize := fileSizeList[i];
+      PakXor(fileSize, 4);
+      fsOut.Write(fileSize, 4);
+
+      timeStamp := FileAge(filePath);
+      PakXor(timeStamp, 8);
+      fsOut.Write(timeStamp, 8);
+    end;
+    flag := PAK_FILEINFO_ENDFLAG;
+    PakXor(flag, 1);
+    fsOut.Write(flag, 1);
+
+    //写入文件
+    for i := 0 to fileList.Count - 1 do
+    begin
+      filePath := fileList[i];
+      restSize := fileSizeList[i];
+      fsIn := TFileStream.Create(filePath, fmOpenRead);
+      while restSize >= outBufLen do
+      begin
+        fsIn.Read(_outputBuffer, outBufLen);
+        PakXor(_outputBuffer, outBufLen);
+        fsOut.Write(_outputBuffer, outBufLen);
+        restSize := restSize - outBufLen;
+      end;
+      if restSize <> 0 then
+      begin
+        fsIn.Read(_outputBuffer, restSize);
+        PakXor(_outputBuffer, restSize);
+        fsOut.Write(_outputBuffer, restSize);
+      end;
+      FreeAndNil(fsIn);
+    end;
 
     Result := True;
   except
